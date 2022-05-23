@@ -6,8 +6,7 @@ public class ATM {
     CustomerAccount defaultCustomer = new CustomerAccount("123456789", "1234", "Cool", "Guy", 5880.05);
     HashMap<String, CustomerAccount> accounts = new HashMap<>();
     double currency;
-    boolean dispenserClear = true;
-    boolean dpSlotClear = true;
+    boolean dispenserClear;
 
     public ATM(CustomerAccount[] accounts, double currency) {
         addAccount(defaultCustomer);
@@ -19,6 +18,7 @@ public class ATM {
         } else {
             this.currency = 0.0;
         }
+        dispenserClear = true;
     }
 
     /*Should only add acct iff acct not in accounts, else throw an exception.*/
@@ -27,12 +27,7 @@ public class ATM {
     }
 
     public boolean validPAN(String pan) {
-        try {
-            this.accounts.get(pan);
-        } catch (NullPointerException e) {
-            return false;
-        }
-        return true;
+        return this.accounts.get(pan) != null;
     }
 
     public CustomerAccount getCurrentCustomer(String pan) {
@@ -43,12 +38,11 @@ public class ATM {
     }
 
     public void setCurrency(double curr) { this.currency = curr; }
+
     public double getCurrency() {
         return currency;
     }
-
     public boolean getDispenserClear() { return dispenserClear; }
-    public boolean getDpSlotClear() { return dpSlotClear; }
 
     private boolean divisibleByTen(double amt) { // if ones digit is a zero, it's divisible by 10
         String amtStr = ""+amt;
@@ -65,10 +59,6 @@ public class ATM {
 
     public void setDispenserClear(boolean dispenserClear) {
         this.dispenserClear = dispenserClear;
-    }
-
-    public void setDpSlotClear(boolean dpSlotClear) {
-        this.dpSlotClear = dpSlotClear;
     }
 
 }

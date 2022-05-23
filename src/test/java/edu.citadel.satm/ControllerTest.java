@@ -7,15 +7,14 @@ import static org.junit.Assert.*;
 public class ControllerTest {
     private Controller c;
     private ATM atm;
-    private View view;
-    private CustomerAccount currCustomer;
+    private View v;
 
     @Before
     public void setUp() {
-        currCustomer = new CustomerAccount("123456789", "1234", "Cool", "Guy", 566.0);
-        atm = new ATM( new CustomerAccount[]{currCustomer}, 50000.0);
-        view = new View("ControllerTest");
-        c = new Controller(atm, view);
+        CustomerAccount[] accts = {};
+        atm = new ATM(accts, 10000.0);
+        v = new View("MyATM");
+        c = new Controller(atm, v);
         c.initController();
     }
 
@@ -23,52 +22,105 @@ public class ControllerTest {
     public void dispenseFundsTest() {
         c.dispenseFunds();
         assertTrue(atm.getDispenserClear());
-        assertEquals("Withdrawal complete.", view.getTopMsg().getText());
+//        assertEquals("Withdrawal complete.", view.getTopMsg().getText());
     }
 
     @Test
     public void acceptDPTest() {
         c.acceptDP();
-        assertTrue(atm.getDpSlotClear());
-        assertEquals("Deposit accepted.", view.getTopMsg().getText());
+        assertEquals("Deposit accepted.", v.getTopMsg().getText());
     }
 
     @Test
     public void enterFieldValidPANTest() {
-        view.setCurrEntryOp(0);
-        view.getEntry().setText("123456789");
+        v.setCurrEntryOp(0);
+        v.getEntry().setText("123456789");
         c.enterField();
 
     }
 
     @Test
     public void enterFieldValidPINTest() {
-        view.setCurrEntryOp(1);
-        view.getEntry().setText("1234");
+        v.setCurrEntryOp(1);
+        v.getEntry().setText("1234");
         c.enterField();
     }
 
     @Test
     public void enterFieldValidWdTest() {
-        view.setCurrEntryOp(2);
-        view.getEntry().setText("10.0");
-        double newBalance = currCustomer.getBalance() + Double.parseDouble(view.getEntry().getText());
+        atm.setDispenserClear(true);
+        v.setCurrEntryOp(2);
+        String wd_amt = "10.0";
+        v.getEntry().setText(wd_amt);
+        double newBalance = c.getCurrCustomer().getBalance() - Double.parseDouble(wd_amt);
         c.enterField();
 
-        assertEquals(newBalance, currCustomer.getBalance(), 0.01);
+        assertEquals(newBalance, c.getCurrCustomer().getBalance(), 0.01);
         assertFalse(atm.getDispenserClear());
-
     }
 
     @Test
-    public void enterFieldValidDpTest() {
-        view.setCurrEntryOp(3);
-        view.getEntry().setText("50.0");
-        double newBalance = currCustomer.getBalance() + Double.parseDouble(view.getEntry().getText());
+    public void atmDispenserBlockedTest() {
+        atm.setDispenserClear(false);
+        v.setCurrEntryOp(2);
+        String wd_amt = "10.0";
+        v.getEntry().setText(wd_amt);
         c.enterField();
 
-        assertEquals(newBalance, currCustomer.getBalance(), 0.01);
-        assertFalse(atm.getDpSlotClear());
+        assertEquals("Please clear dispenser by clicking it.", v.getBtmMsg().getText());
+    }
+
+    @Test
+    public void wdNegTest() {
+        atm.setDispenserClear(true);
+        v.setCurrEntryOp(2);
+        String wd_amt = "-10.0";
+        v.getEntry().setText(wd_amt);
+        c.enterField();
+
+        assertEquals("Cannot be negative. Enter new withdrawal amount.", v.getBtmMsg().getText());
+    }
+
+    @Test
+    public void wdGreaterThanBalTest() {
+        atm.setDispenserClear(true);
+        v.setCurrEntryOp(2);
+        double originalBal = c.getCurrCustomer().getBalance();
+        String wd_amt = Double.toString(originalBal + 1.0);
+        v.getEntry().setText(wd_amt);
+        c.enterField();
+
+        assertEquals("Insufficient funds. ", v.getTopMsg().getText());
+        assertEquals("Enter new withdrawal amount.", v.getBtmMsg().getText());
+        assertEquals(c.getCurrCustomer().getBalance(), originalBal, 0.01);
+    }
+
+    @Test
+    public void wdExceedsATMCurrencyTest() {
+        atm.setDispenserClear(true);
+        v.setCurrEntryOp(2);
+        String wd_amt = "999999999999.0";
+        v.getEntry().setText(wd_amt);
+        double originalBal = c.getCurrCustomer().getBalance();
+        c.enterField();
+
+        assertEquals("Insufficient funds. ", v.getTopMsg().getText());
+        assertEquals("Enter new withdrawal amount.", v.getBtmMsg().getText());
+        assertEquals(c.getCurrCustomer().getBalance(), originalBal);
+    }
+
+    @Test
+    public void wdNotMultiple10Test() {}
+
+
+    @Test
+    public void enterFieldValidDpTest() {
+        v.setCurrEntryOp(3);
+        v.getEntry().setText("50.0");
+        double newBalance = c.getCurrCustomer().getBalance() + Double.parseDouble(v.getEntry().getText());
+        c.enterField();
+
+        assertEquals(newBalance, c.getCurrCustomer().getBalance(), 0.01);
     }
 
 }

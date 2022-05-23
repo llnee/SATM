@@ -1,13 +1,18 @@
 package edu.citadel.satm;
 
-import javax.swing.*;
+import java.awt.*;
 import java.util.Objects;
 
 public class Controller {
 
-    private ATM atm;
-    private View view;
+    private final ATM atm;
+    private final View view;
     private CustomerAccount currCustomer;
+
+    // getters for testing only
+    public ATM getAtm() { return atm; }
+    public View getView() { return view; }
+    public CustomerAccount getCurrCustomer(){ return currCustomer; }
 
     public Controller(ATM atm, View v) {
         this.atm = atm;
@@ -17,7 +22,6 @@ public class Controller {
 
     public void initController() {
         view.getDispenserButton().addActionListener(e -> dispenseFunds());
-        view.getDPSlotButton().addActionListener(e -> acceptDP());
         view.getClearButton().addActionListener(e -> clearField());
         view.getEnterButton().addActionListener(e -> enterField());
         view.getCancelButton().addActionListener(e -> cancelAction());
@@ -30,11 +34,11 @@ public class Controller {
 
     public void dispenseFunds() {
         atm.setDispenserClear(true);
-        view.setTopMsg("Withdrawal complete.");
+        view.getDispenserButton().setBackground(view.getEnterButton().getBackground());
+        view.getDispenserButton().setForeground(view.getEnterButton().getForeground());
     }
 
     public void acceptDP() {
-        atm.setDpSlotClear(true);
         view.setTopMsg("Deposit accepted.");
     }
 
@@ -43,28 +47,26 @@ public class Controller {
     }
 
     private void enteredPAN(String pan) {
-        view.setTopMsg("                   ");
+        view.setTopMsg("");
         if (!atm.validPAN(pan)) {
-            view.setBtmMsg("     Invalid ATM card. Card retained.                 ");
+            view.setBtmMsg("   Invalid ATM card. Card retained.                 ");
             view.clearView();
         } else {
             this.currCustomer = atm.getCurrentCustomer(pan);
-            view.setBtmMsg("               Please enter your PIN number.                    ");
+            view.setBtmMsg("  Please enter your PIN number.    ");
             view.setCurrEntryOp(1);
         }
     }
 
     private void enteredPIN(String pin) {
-        view.setTopMsg("                   ");
+        view.setTopMsg("");
         if (!currCustomer.validPIN(pin)) {
-            view.setBtmMsg("               Invalid pin. Card retained.                 ");
+            view.setBtmMsg("             Invalid pin. Card retained.                 ");
             view.clearView();
         } else {
-//            view.setTopMsg("");
-            view.setBtmMsg("              Select transaction below:                         ");
+            view.hideEntry();
+            view.setBtmMsg("            Select transaction below:                         ");
             view.viewTransactionSelection();
-            view.getEntry().setEnabled(false); //disables entry until wd/dp selected
-            view.getCurrEntryOp().setText("                              ");
         }
     }
 
@@ -76,43 +78,44 @@ public class Controller {
                     atm.withdrawal(wdAmt);
                     atm.setDispenserClear(false);
                     view.setBtmMsg("Click dispenser to retrieve funds.");
+                    view.getDispenserButton().setBackground(Color.GREEN);
+                    view.getDispenserButton().setBackground(Color.GREEN);
                     viewBalAction();
                 } catch (ArithmeticException e) {
-                    view.setBtmMsg("Insufficient funds. Enter new withdrawal amount.");
+                    view.setTopMsg("Insufficient funds. ");
+                    view.setBtmMsg("Enter new withdrawal amount.");
                     currCustomer.deposit(wdAmt); // returns withdrawn funds to customer
                 } catch (IllegalArgumentException e) {
-                    view.setBtmMsg("Cannot currently process withdrawals that large. Enter new withdrawal amount.");
-                    currCustomer.deposit(wdAmt); // returns withdrawn funds to customer
+                    view.setTopMsg("Cannot currently process withdrawals that large. ");
+                    view.setBtmMsg("Enter new withdrawal amount.");
+                    currCustomer.deposit(wdAmt); // """
                 } catch (UnsupportedOperationException e) {
-                    view.setBtmMsg("Machine can only dispense $10 notes. Enter new withdrawal amount     .");
-                    currCustomer.deposit(wdAmt); // returns withdrawn funds to customer
+                    view.setTopMsg("Machine can only dispense $10 notes. ");
+                    view.setBtmMsg("Enter new withdrawal amount.");
+                    currCustomer.deposit(wdAmt); // """
                 }
             } else {
                 view.setBtmMsg("Cannot be negative. Enter new withdrawal amount.");
             }
         } else {
+            view.hideEntry();
             view.setBtmMsg("Please clear dispenser by clicking it.");
         }
     }
 
     private void enteredDpAmt(double dpAmt) {
-        if (atm.dpSlotClear) {
-            try {
-                currCustomer.deposit(dpAmt);
-                atm.setDpSlotClear(false);
-                view.setBtmMsg("Click DP Slot to insert funds.");
-                viewBalAction();
-            } catch (IllegalArgumentException e) {
-                view.setBtmMsg("Cannot be negative. Enter new deposit amount.");
-            }
-        } else {
-            view.setBtmMsg("Please clear dp slot by clicking it.");
+        try {
+            currCustomer.deposit(dpAmt);
+            viewBalAction();
+        } catch (IllegalArgumentException e) {
+            view.setBtmMsg("Cannot be negative. Enter new deposit amount.");
         }
     }
 
 
     public void enterField() {
         // can enter pan, pin, wd_amt, dp_amt
+        /*FIX: not tested or handled for any enterField, enter text or chars*/
         String input = view.getEntry().getText();
         String currEntryOp = view.getCurrEntryOp().getText();
 
@@ -133,26 +136,27 @@ public class Controller {
     }
 
     public void viewBalAction() {
-        view.getEntry().setEnabled(false);
+        view.hideEntry();
         view.hideTransactionSelection();
-        view.setTopMsg("                    Balance:          $" + currCustomer.getBalance());
+        view.setTopMsg("            Balance: $" + currCustomer.getBalance());
         view.setBtmMsg("");
-        view.getCurrEntryOp().setText("                                   ");
-        view.setBtmMsg("          Another transaction?");
+        view.setBtmMsg("        Another transaction?");
         view.viewYesNo();
     }
 
     private void wdAction() {
         view.hideYesNo();
-        view.getEntry().setEnabled(true); //enable entry again
         view.hideTransactionSelection();
+        view.viewEntry();
+        view.setTopMsg(""); view.setBtmMsg("");
         view.getCurrEntryOp().setText("Enter withdrawal amount:");
     }
 
     private void dpAction() {
         view.hideYesNo();
-        view.getEntry().setEnabled(true); //enable entry again
         view.hideTransactionSelection();
+        view.viewEntry();
+        view.setTopMsg(""); view.setBtmMsg("");
         view.getCurrEntryOp().setText("Enter deposit amount:");
     }
 
@@ -164,7 +168,7 @@ public class Controller {
 
     private void noAction() {
         view.setTopMsg("     Thank you.     ");
-        view.setBtmMsg("Please take your atm card.     ");
+        view.setBtmMsg("Your atm card has been returned to you.");
         view.clearView();
     }
 }
