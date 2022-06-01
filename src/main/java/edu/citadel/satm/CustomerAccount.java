@@ -38,6 +38,5 @@ public class CustomerAccount {
     public void withdrawal(double wdAmt) {
         if (wdAmt > this.balance) { throw new ArithmeticException(); }
         this.balance -= wdAmt;
-//        System.out.println("Acct bal: " + this.balance);
     }
 }

@@ -84,15 +84,14 @@ public class Controller {
                 } catch (ArithmeticException e) {
                     view.setTopMsg("Insufficient funds. ");
                     view.setBtmMsg("Enter new withdrawal amount.");
-                    currCustomer.deposit(wdAmt); // returns withdrawn funds to customer
                 } catch (IllegalArgumentException e) {
                     view.setTopMsg("Cannot currently process withdrawals that large. ");
                     view.setBtmMsg("Enter new withdrawal amount.");
-                    currCustomer.deposit(wdAmt); // """
+                    currCustomer.deposit(wdAmt); // returns withdrawn funds to customer
                 } catch (UnsupportedOperationException e) {
                     view.setTopMsg("Machine can only dispense $10 notes. ");
                     view.setBtmMsg("Enter new withdrawal amount.");
-                    currCustomer.deposit(wdAmt); // """
+                    currCustomer.deposit(wdAmt); // returns withdrawn funds to customer
                 }
             } else {
                 view.setBtmMsg("Cannot be negative. Enter new withdrawal amount.");

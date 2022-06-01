@@ -86,31 +86,50 @@ public class ControllerTest {
         atm.setDispenserClear(true);
         v.setCurrEntryOp(2);
         double originalBal = c.getCurrCustomer().getBalance();
-        String wd_amt = Double.toString(originalBal + 1.0);
+        double originalAtmCurr = atm.getCurrency();
+        double multOfTen = 10 - (originalBal % 10.0);
+        String wd_amt = Double.toString(originalBal + multOfTen);
         v.getEntry().setText(wd_amt);
         c.enterField();
 
         assertEquals("Insufficient funds. ", v.getTopMsg().getText());
         assertEquals("Enter new withdrawal amount.", v.getBtmMsg().getText());
         assertEquals(c.getCurrCustomer().getBalance(), originalBal, 0.01);
+        assertEquals(c.getAtm().getCurrency(), originalAtmCurr, 0.01);
     }
 
     @Test
     public void wdExceedsATMCurrencyTest() {
         atm.setDispenserClear(true);
         v.setCurrEntryOp(2);
-        String wd_amt = "999999999999.0";
-        v.getEntry().setText(wd_amt);
         double originalBal = c.getCurrCustomer().getBalance();
+        atm.setCurrency(originalBal - 10.0); // atm.currency must be < customerBal. Otherwise, test fails at wd > bal
+        double originalAtmCurr = atm.getCurrency();
+        String wd_amt = Double.toString(originalBal - 5.0);
+        v.getEntry().setText(wd_amt);
         c.enterField();
 
-        assertEquals("Insufficient funds. ", v.getTopMsg().getText());
+        assertEquals("Cannot currently process withdrawals that large. ", v.getTopMsg().getText());
         assertEquals("Enter new withdrawal amount.", v.getBtmMsg().getText());
-        assertEquals(c.getCurrCustomer().getBalance(), originalBal);
+        assertEquals(c.getCurrCustomer().getBalance(), originalBal, 0.01);
+        assertEquals(c.getAtm().getCurrency(), originalAtmCurr, 0.01);
     }
 
     @Test
-    public void wdNotMultiple10Test() {}
+    public void wdNotMultiple10Test() {
+        atm.setDispenserClear(true);
+        v.setCurrEntryOp(2);
+        double originalBal = c.getCurrCustomer().getBalance();
+        double originalAtmCurr = atm.getCurrency();
+        String wd_amt = Double.toString(2.0);
+        v.getEntry().setText(wd_amt);
+        c.enterField();
+
+        assertEquals("Machine can only dispense $10 notes. ", v.getTopMsg().getText());
+        assertEquals("Enter new withdrawal amount.", v.getBtmMsg().getText());
+        assertEquals(c.getCurrCustomer().getBalance(), originalBal, 0.01);
+        assertEquals(c.getAtm().getCurrency(), originalAtmCurr, 0.01);
+    }
 
 
     @Test

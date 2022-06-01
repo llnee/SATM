@@ -21,7 +21,7 @@ public class ATM {
         dispenserClear = true;
     }
 
-    /*Should only add acct iff acct not in accounts, else throw an exception.*/
+    /*FIX only add acct iff acct not in accounts, else throw an exception.*/
     private void addAccount(CustomerAccount acct) {
         this.accounts.put(acct.getPan(), acct);
     }
@@ -57,8 +57,6 @@ public class ATM {
         this.currency -= wdAmt;
     }
 
-    public void setDispenserClear(boolean dispenserClear) {
-        this.dispenserClear = dispenserClear;
-    }
+    public void setDispenserClear(boolean dispenserClear) { this.dispenserClear = dispenserClear; }
 
 }
